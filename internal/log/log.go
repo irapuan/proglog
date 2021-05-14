@@ -18,6 +18,9 @@ There’s always one special segment among the list of segments,
 and that’s the active segment. We call it the active segment because
 it’s the only segment we actively write to. When we’ve filled the
 active segment, we create a new segment and make it the active segment.
+
+The log consists of a list of segments and a pointer to the active segment to append writes to.
+The directory is where we store the segments.
 */
 type Log struct {
 	mu sync.RWMutex
@@ -29,6 +32,10 @@ type Log struct {
 	segments      []*segment
 }
 
+/*
+In NewLog(dir string, c Config), we first set defaults for the configs the
+caller didn’t specify, create a log instance, and set up that instance.
+*/
 func NewLog(dir string, c Config) (*Log, error) {
 	if c.Segment.MaxStoreBytes == 0 {
 		c.Segment.MaxStoreBytes = 1024
@@ -44,6 +51,15 @@ func NewLog(dir string, c Config) (*Log, error) {
 	return l, l.setup()
 }
 
+/*
+When a log starts, it’s responsible for setting itself up for
+the segments that already exist on disk or, if the log is new
+and has no existing segments, for bootstrapping the initial segment.
+We fetch the list of the segments on disk, parse and sort the base
+offsets (because we want our slice of segments to be in order from oldest to newest),
+and then create the segments with the newSegment() helper method,
+which creates a segment for the base offset you pass in.
+*/
 func (l *Log) setup() error {
 	files, err := ioutil.ReadDir(l.Dir)
 	if err != nil {
@@ -92,6 +108,17 @@ func (l *Log) Append(record *api.Record) (uint64, error) {
 	return off, err
 }
 
+/*
+Read(offset uint64) reads the record stored at the given offset.
+In Read(offset uint64), we first find the segment that contains
+the given record. Since the segments are in order from oldest to
+newest and the segment’s base offset is the smallest offset in the segment,
+we iterate over the segments until we find the first segment whose base
+offset is less than or equal to the offset we’re looking for.
+Once we know the segment that contains the record, we get the index entry
+from the segment’s index, and we read the data out of the segment’s store
+file and return the data to the caller.
+*/
 func (l *Log) Read(off uint64) (*api.Record, error) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -159,6 +186,12 @@ func (l *Log) HighestOffset() (uint64, error) {
 	return off - 1, nil
 }
 
+/*
+Truncate(lowest uint64) removes all segments whose highest
+offset is lower than lowest. Because we don’t have disks
+with infinite space, we’ll periodically call Truncate() to remove
+old segments whose data we (hopefully) have processed by then and don’t need anymore.
+*/
 func (l *Log) Truncate(lowest uint64) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -176,6 +209,17 @@ func (l *Log) Truncate(lowest uint64) error {
 	return nil
 }
 
+/*
+Reader() returns an io.Reader to read the whole log.
+We’ll need this capability when we implement coordinate consensus
+and need to support snapshots and restoring a log.
+Reader() uses an io.MultiReader() call to concatenate the segments’ stores.
+The segment stores are wrapped by the originReader type for two
+reasons. The first reason is to satisfy the io.Reader interface
+so we can pass it into the io.MultiReader() call.
+The second is to ensure that we begin reading from the origin of the store
+and read its entire file.
+*/
 func (l *Log) Reader() io.Reader {
 	l.mu.RLock()
 	defer l.mu.RUnlock()

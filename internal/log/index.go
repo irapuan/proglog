@@ -7,18 +7,35 @@ import (
 	"github.com/tysontate/gommap"
 )
 
+/*
+The (off|pos|ent)Width constants below define the number of bytes
+that make up each index entry
+*/
 var (
 	offWidth uint64 = 4
 	posWidth uint64 = 8
 	entWidth        = offWidth + posWidth
 )
 
+/*
+index defines our index file, which comprises a persisted file
+and a memory-mapped file (mmap).
+The size tells us the size of the index and where to write
+the next entry appended to the index.
+*/
 type index struct {
 	file *os.File
-	mmap gommap.MMap
+	mmap gommap.MMap // https://medium.com/i0exception/memory-mapped-files-5e083e653b1
 	size uint64
 }
 
+/*
+newIndex(*os.File) creates an index for the given file.
+We create the index and save the current size of the
+file so we can track the amount of data in the index file
+as we add index entries. We grow the file to the max index
+size before memory-mapping the file and then return the created index to the caller.
+*/
 func newIndex(file *os.File, config Config) (*index, error) {
 	idx := &index{
 		file: file,
@@ -47,6 +64,12 @@ func newIndex(file *os.File, config Config) (*index, error) {
 
 }
 
+/*
+Close() makes sure the memory-mapped file has synced its data to the persisted
+file and that the persisted file has flushed its contents to stable storage.
+Then it truncates the persisted file to the amount of data that’s actually in
+it and closes the file.
+*/
 func (i *index) Close() error {
 	if err := i.mmap.Sync(gommap.MS_SYNC); err != nil {
 		return err
