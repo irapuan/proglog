@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,6 +13,12 @@ import (
 	api "github.com/irapuan/proglog/api/v1"
 )
 
+/*
+There’s always one special segment among the list of segments,
+and that’s the active segment. We call it the active segment because
+it’s the only segment we actively write to. When we’ve filled the
+active segment, we create a new segment and make it the active segment.
+*/
 type Log struct {
 	mu sync.RWMutex
 
@@ -98,7 +103,7 @@ func (l *Log) Read(off uint64) (*api.Record, error) {
 		}
 	}
 	if s == nil || s.nextOffset <= off {
-		return nil, fmt.Errorf("offset out of range: %d", off)
+		return nil, api.ErrOffsetOutOfRange{Offset: off}
 	}
 	return s.Read(off)
 }

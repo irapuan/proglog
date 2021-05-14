@@ -9,6 +9,22 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+/*
+Each segment comprises a store file and an index file.
+The segment’s store file is where we store the record data;
+we continually append records to this file. The segment’s index file is where
+we index each record in the store file. The index file speeds up reads
+because it maps record offsets to their position in the store file.
+Reading a record given its offset is a two-step process: first you get
+the entry from the index file for the record, which tells you the position
+of the record in the store file, and then you read the record at that position
+in the store file.
+Since the index file requires only two small fields—the offset and
+stored position of the record—the index file is much smaller than the
+store file that stores all your record data. Index files are small enough that
+we can memory-map2 them and make operations on the file as fast as operating on in-memory data.
+*/
+
 type segment struct {
 	store                  *store
 	index                  *index
