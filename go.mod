@@ -3,6 +3,7 @@ module github.com/irapuan/proglog
 go 1.14
 
 require (
+	github.com/casbin/casbin v1.9.1 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/golang/protobuf v1.4.1
 	github.com/gorilla/mux v1.8.0
