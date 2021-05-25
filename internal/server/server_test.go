@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	api "github.com/irapuan/proglog/api/v1"
+	"github.com/irapuan/proglog/internal/auth"
 	"github.com/irapuan/proglog/internal/config"
 	"github.com/irapuan/proglog/internal/log"
 	"github.com/stretchr/testify/require"
@@ -26,7 +27,7 @@ func TestServer(t *testing.T) {
 		"produce/consume a message to/from the log succeeeds": testProduceConsume,
 		"produce/consume stream succeeds":                     testProduceConsumeStream,
 		"consume past log boundary fails":                     testConsumePastBoundary,
-		//"unauthorized fails":                                  testUnauthorized,
+		"unauthorized fails":                                  testUnauthorized,
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			rootClient,
@@ -98,8 +99,10 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	clog, err := log.NewLog(dir, log.Config{})
 	require.NoError(t, err)
 
+	authorizer := auth.New(config.ACLModelFile, config.ACLPolicyFile)
 	cfg = &Config{
-		CommitLog: clog,
+		CommitLog:  clog,
+		Authorizer: authorizer,
 	}
 	if fn != nil {
 		fn(cfg)
