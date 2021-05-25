@@ -1,7 +1,6 @@
 package log
 
 import (
-	enc "encoding/binary"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -61,7 +60,7 @@ func testReadAt(t *testing.T, s *store) {
 		require.Equal(t, lenWidth, n)
 		off += int64(n)
 
-		size := enc.Uint64(b)
+		size := encoding.Uint64(b)
 		b = make([]byte, size)
 		n, err = s.ReadAt(b, off)
 		require.NoError(t, err)
