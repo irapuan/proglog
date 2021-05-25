@@ -1,0 +1,16 @@
+{
+    "CN": "ICB CA",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "NL",
+            "L": "RT",
+            "ST": "Zuid-Holland",
+            "O": "ICB",
+            "OU": "R&D"
+        }
+    ]
+}
