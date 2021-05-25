@@ -1,6 +1,7 @@
 package log
 
 import (
+	enc "encoding/binary"
 	"io/ioutil"
 	"os"
 	"testing"
