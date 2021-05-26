@@ -62,7 +62,7 @@ func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (
 		),
 	}
 
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSamnple()})
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 	err := view.Register(ocgrpc.DefaultServerViews...)
 	if err != nil {
 		return nil, err
