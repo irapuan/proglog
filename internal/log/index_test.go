@@ -10,7 +10,7 @@ import (
 )
 
 func TestIndex(t *testing.T) {
-	f, err := ioutil.TempFile("/Users/Coleto.Bottosso/projects/go/proglog/internal/log/", "index_test_buf")
+	f, err := ioutil.TempFile("", "index_test_buf")
 	require.NoError(t, err)
 	defer os.Remove(f.Name())
 
