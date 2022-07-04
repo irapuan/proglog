@@ -3,6 +3,14 @@ CONFIG_PATH=${HOME}/.proglog/
 .PHONY: init
 init: 
 	mkdir -p ${CONFIG_PATH}
+	go get google.golang.org/protobuf/proto@latest
+	go get google.golang.org/grpc@latest
+	go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go get github.com/cloudflare/cfssl/cmd/cfssl@latest
+	go get github.com/cloudflare/cfssl/cmd/cfssljson@latest
+	go get github.com/casbin/casbin@latest
+	go get go.uber.org/zap@latest
+	go get go.opencensus.io@latest
 
 .PHONY: gencert
 gencert: 
@@ -40,10 +48,10 @@ $(CONFIG_PATH)/policy.csv:
 test: $(CONFIG_PATH)/policy.csv $(CONFIG_PATH)/model.conf
 	go test -race ./... 
 .PHONY: compile
-compile:
-	/usr/local/protobuf/bin/protoc api/v1/*.proto \
-					--go_out=. \
-					--go-grpc_out=. \
-					--go_opt=paths=source_relative \
-					--go-grpc_opt=paths=source_relative \
-					--proto_path=.
+compile: 
+	protoc  api/v1/*.proto \
+		--go_out=. \
+		--go-grpc_out=. \
+		--go_opt=paths=source_relative \
+		--go-grpc_opt=paths=source_relative \
+		--proto_path=.
